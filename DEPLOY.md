@@ -2,7 +2,29 @@
 
 Domen: **https://landing.okaposai.uz**
 
-> **Finance allaqachon ishlayapti?** — quyidagi [Mavjud serverga qo'shish](#mavjud-serverga-qoshish) bo'limidan foydalaning. Finance qayta o'rnatilmaydi.
+## Tavsiya: Nginx + Certbot (oddiy)
+
+Agar Caddy SSL bilan muammo bo'lsa — **Certbot + host nginx** ishlating (avvalgi usul):
+
+```bash
+cd /var/www/landing_wtma
+git pull
+chmod +x scripts/setup-nginx-certbot.sh
+sudo CERTBOT_EMAIL=sizning@email.com ./scripts/setup-nginx-certbot.sh
+```
+
+Skript:
+1. Caddy ni to'xtatadi
+2. Finance → `127.0.0.1:8081`, Landing → `127.0.0.1:8082`
+3. Nginx ikkala domen uchun sozlaydi
+4. **Certbot** SSL sertifikat oladi (avtomatik yangilanadi)
+
+| Domen | Nginx → |
+|-------|---------|
+| landing.okaposai.uz | 127.0.0.1:8082 (landing docker) |
+| wtma.okaposai.uz | 127.0.0.1:8081 (finance docker) |
+
+---
 
 ## Server papkalari
 

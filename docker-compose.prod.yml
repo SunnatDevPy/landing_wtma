@@ -1,9 +1,6 @@
 # Production — landing.okaposai.uz
-# Serverda: docker compose -f docker-compose.prod.yml up -d --build
-#
-# Finance loyihasidagi Caddy allaqachon 80/443 portlarni band qilgan.
-# Bu compose faqat ichki nginx konteynerini ishga tushiradi; Caddy
-# `wtma` tarmog'i orqali `wtma-landing-web:80` ga yo'naltiradi.
+# Variant A: Caddy orqali (wtma tarmog'i)
+# Variant B: Host nginx + Certbot (127.0.0.1:8082) — setup-nginx-certbot.sh
 
 services:
   web:

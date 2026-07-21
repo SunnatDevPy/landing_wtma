@@ -1,0 +1,12 @@
+# Nginx + Certbot rejimi — faqat localhost:8082 da ishlaydi
+# docker compose -f docker-compose.nginx.yml up -d --build
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: wtma-landing-web
+    ports:
+      - "127.0.0.1:8082:80"
+    restart: unless-stopped

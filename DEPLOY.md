@@ -2,88 +2,158 @@
 
 Domen: **https://landing.okaposai.uz**
 
-Finance panel allaqachon **wtma.okaposai.uz** da ishlayapti. Landing xuddi shu serverda, alohida Docker konteyner sifatida ishlaydi; Caddy ikkala domenni boshqaradi.
+> **Finance allaqachon ishlayapti?** — quyidagi [Mavjud serverga qo'shish](#mavjud-serverga-qoshish) bo'limidan foydalaning. Finance qayta o'rnatilmaydi.
 
-## 1. DNS
+## Server papkalari
 
-Registrator panelida `landing.okaposai.uz` uchun **A yozuv** qo'shing — **wtma.okaposai.uz** bilan bir xil server IP.
+| Loyiha  | Yo'l                    | Domen                  |
+|---------|-------------------------|------------------------|
+| Finance | `/var/www/finance`      | wtma.okaposai.uz       |
+| Landing | `/var/www/landing_wtma` | landing.okaposai.uz    |
 
-| Type | Name    | Value        |
-|------|---------|--------------|
-| A    | landing | SERVER_IP    |
+---
 
-DNS tarqalishi 5–30 daqiqa olishi mumkin.
+## Mavjud serverga qo'shish
 
-## 2. Serverga kod yuklash
+Finance o'tgan oy o'rnatilgan bo'lsa, faqat 3 narsa kerak:
 
-Serverda (masalan `/opt/wtma-landing`):
+1. **DNS** — `landing.okaposai.uz` A yozuvi (wtma bilan bir xil IP)
+2. **Landing** — `/var/www/landing_wtma` ga clone + Docker
+3. **Caddy** — landing domeni uchun yangi blok (Finance qayta build qilinmaydi)
+
+### Tez yo'l (bitta skript)
+
+Serverda:
 
 ```bash
-# Variant A — git orqali (tavsiya)
-git clone <repo-url> /opt/wtma-landing
-cd /opt/wtma-landing
-
-# Variant B — lokal mashinadan rsync
-rsync -avz --exclude node_modules --exclude dist \
-  ./ user@SERVER_IP:/opt/wtma-landing/
+git clone https://github.com/SunnatDevPy/landing_wtma.git /var/www/landing_wtma
+cd /var/www/landing_wtma
+chmod +x scripts/add-to-existing-server.sh
+./scripts/add-to-existing-server.sh
 ```
 
-## 3. Finance Caddy ni yangilash (bir marta)
+Skript nima qiladi:
+- Landing ni build qiladi
+- `wtma` Docker tarmog'ini yaratadi (yoki mavjudidan foydalanadi)
+- Caddy ni shu tarmoqqa ulaydi
+- Finance `Caddyfile` ni yangilaydi va **faqat Caddy** ni restart qiladi
+- `db`, `api`, `web` konteynerlariga **tegmaydi**
 
-Finance loyihasida (`Finance_managment`) Caddy ikkala domenni qabul qiladi — `Caddyfile` va `docker-compose.prod.yml` allaqachon yangilangan.
+### Qo'lda (agar skript ishlamasa)
 
-`.env.prod` ga qo'shing:
+**1. DNS** — `landing` → server IP
 
+**2. Landing clone:**
+```bash
+git clone https://github.com/SunnatDevPy/landing_wtma.git /var/www/landing_wtma
+cd /var/www/landing_wtma
+```
+
+**3. Docker tarmoq** (Caddy va landing bir-birini ko'rishi uchun):
+```bash
+docker network create wtma 2>/dev/null || true
+
+# Caddy konteyner nomini toping:
+docker ps | grep caddy
+# Masalan: finance-caddy-1
+
+docker network connect wtma finance-caddy-1
+```
+
+**4. Finance Caddyfile** — `/var/www/finance/Caddyfile` oxiriga qo'shing:
+
+```caddyfile
+{$LANDING_DOMAIN:landing.okaposai.uz} {
+	encode gzip
+	reverse_proxy wtma-landing-web:80
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+```
+
+`/var/www/finance/.env.prod` ga qo'shing:
 ```env
-DOMAIN=wtma.okaposai.uz
 LANDING_DOMAIN=landing.okaposai.uz
-ACME_EMAIL=sizning@email.com
 ```
 
-Keyin Finance stackni qayta ishga tushiring (bu `wtma` Docker tarmog'ini yaratadi):
-
+**5. Faqat Caddy ni yangilash** (Finance panel ishda qoladi):
 ```bash
-cd /path/to/Finance_managment
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+cd /var/www/finance
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d caddy
 ```
 
-## 4. Landing ni ishga tushirish
-
+**6. Landing ishga tushirish:**
 ```bash
-cd /opt/wtma-landing
-chmod +x scripts/deploy.sh
-./scripts/deploy.sh
-```
-
-Yoki qo'lda:
-
-```bash
+cd /var/www/landing_wtma
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-## 5. Tekshirish
-
+**7. Tekshirish:**
 ```bash
-docker ps | grep wtma-landing
-curl -I http://localhost  # Caddy orqali
-curl -H "Host: landing.okaposai.uz" http://127.0.0.1 -I
+curl -I -H "Host: landing.okaposai.uz" http://127.0.0.1
 ```
 
 Brauzerda: **https://landing.okaposai.uz**
 
-## Yangilash (keyingi deploylar)
+### Eski Finance tarmog'i boshqacha bo'lsa
+
+Agar `network wtma not found` xatosi chiqsa, mavjud tarmoq nomini toping:
 
 ```bash
-cd /opt/wtma-landing
-git pull   # yoki rsync
+docker network ls
+docker inspect finance-caddy-1 --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}'
+```
+
+Keyin landing ishga tushiring:
+```bash
+cd /var/www/landing_wtma
+DOCKER_NETWORK=finance_default docker compose -f docker-compose.prod.yml up -d --build
+```
+
+(`finance_default` o'rniga o'zingiz topgan tarmoq nomini yozing)
+
+---
+
+## Yangi server (noldan o'rnatish)
+
+Agar Finance hali o'rnatilmagan bo'lsa:
+
+```bash
+git clone https://github.com/SunnatDevPy/Finance_kpi.git /var/www/finance
+cd /var/www/finance
+cp .env.prod.example .env.prod
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+
+git clone https://github.com/SunnatDevPy/landing_wtma.git /var/www/landing_wtma
+cd /var/www/landing_wtma
+./scripts/deploy.sh
+```
+
+---
+
+## Landing yangilash (keyingi deploylar)
+
+```bash
+cd /var/www/landing_wtma
+git pull
 docker compose -f docker-compose.prod.yml up -d --build
 ```
+
+Finance panelga tegmaydi.
+
+---
 
 ## Muammolar
 
 | Muammo | Yechim |
 |--------|--------|
-| `network wtma not found` | Avval Finance `docker compose ... up -d` ishga tushiring |
+| `network wtma not found` | `docker network create wtma` yoki `DOCKER_NETWORK=...` bilan ishga tushiring |
 | SSL sertifikat olinmadi | DNS A yozuvi to'g'ri ekanini tekshiring |
 | 502 Bad Gateway | `docker ps` da `wtma-landing-web` ishlayotganini tekshiring |
-| Eski sahifa | `docker compose ... up -d --build` qayta ishga tushiring |
+| Finance ishlamay qoldi | Faqat `caddy` ni restart qiling, `up -d --build` emas |
+| Caddy landing ni ko'rmayapti | `docker network connect wtma <caddy-container>` |

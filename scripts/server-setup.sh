@@ -2,8 +2,8 @@
 # Serverda birinchi marta ishga tushirish (root yoki docker guruhidagi user)
 set -euo pipefail
 
-FINANCE_DIR="${FINANCE_DIR:-/opt/Finance_managment}"
-LANDING_DIR="${LANDING_DIR:-/opt/wtma-landing}"
+FINANCE_DIR="${FINANCE_DIR:-/var/www/finance}"
+LANDING_DIR="${LANDING_DIR:-/var/www/landing_wtma}"
 
 echo "==> 1/3 Finance stack (Caddy + wtma tarmog'i)"
 cd "$FINANCE_DIR"

@@ -20,3 +20,4 @@ services:
 networks:
   wtma:
     external: true
+    name: ${DOCKER_NETWORK:-wtma}

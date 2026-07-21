@@ -10,4 +10,4 @@ docker compose -f docker-compose.prod.yml up -d --build
 echo ""
 echo "Done. Landing container: wtma-landing-web"
 echo "Ensure Finance Caddy routes landing.okaposai.uz -> wtma-landing-web:80"
-echo "Then restart Caddy: cd /path/to/Finance_managment && docker compose -f docker-compose.prod.yml restart caddy"
+echo "Then restart Caddy: cd /var/www/finance && docker compose -f docker-compose.prod.yml restart caddy"

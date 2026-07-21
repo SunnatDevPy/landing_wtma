@@ -157,3 +157,36 @@ Finance panelga tegmaydi.
 | 502 Bad Gateway | `docker ps` da `wtma-landing-web` ishlayotganini tekshiring |
 | Finance ishlamay qoldi | Faqat `caddy` ni restart qiling, `up -d --build` emas |
 | Caddy landing ni ko'rmayapti | `docker network connect wtma <caddy-container>` |
+| `ERR_SSL_PROTOCOL_ERROR` | `./scripts/fix-ssl.sh` — Certbot/nginx ziddiyati + sertifikat qayta olish |
+
+### SSL xato (ERR_SSL_PROTOCOL_ERROR)
+
+**Belgilar:** HTTP ishlaydi (`curl` 308 redirect), brauzerda HTTPS ochilmaydi.
+
+**Sabab:** Caddy landing uchun Let's Encrypt sertifikat ololmagan. Eski **Certbot** yoki **host nginx** 443 portni band qilgan bo'lishi mumkin.
+
+**Tuzatish (serverda):**
+```bash
+cd /var/www/landing_wtma
+git pull
+chmod +x scripts/fix-ssl.sh
+./scripts/fix-ssl.sh
+```
+
+**Qo'lda:**
+```bash
+# Eski certbot/nginx to'xtatish
+sudo systemctl stop nginx certbot.timer 2>/dev/null || true
+
+# Caddy loglari
+docker logs finance-caddy-1 --tail 30
+
+# Caddy qayta ishga tushirish
+cd /var/www/finance
+docker compose -f docker-compose.prod.yml --env-file .env.prod restart caddy
+
+# HTTPS test
+curl -vI https://landing.okaposai.uz
+```
+
+> **Eslatma:** Endi SSL **Caddy** orqali avtomatik olinadi. Certbot kerak emas — faqat Caddy 80 va 443 portlarni ishlatishi kerak.

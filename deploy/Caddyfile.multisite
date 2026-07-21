@@ -1,0 +1,33 @@
+# Production reverse proxy — HTTPS terminatsiyasi.
+#
+# Caddy har bir domen uchun avtomatik Let's Encrypt sertifikat oladi.
+# DNS A yozuvlari shu server IP manziliga yo'naltirilgan bo'lishi SHART.
+{
+	email {$ACME_EMAIL:internal@example.com}
+}
+
+# WTMA Finance panel
+{$DOMAIN:wtma.okaposai.uz} {
+	encode gzip
+	reverse_proxy web:80
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# WTMA Marketing landing
+{$LANDING_DOMAIN:landing.okaposai.uz} {
+	encode gzip
+	reverse_proxy wtma-landing-web:80
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}

@@ -15,7 +15,7 @@ echo "=========================================="
 echo ""
 
 # --- 1. Eski Certbot / host nginx to'xtatish (443 port ziddiyati) ---
-echo "==> [1/7] Eski Certbot va host nginx tekshiruvi..."
+echo "==> [1/8] Eski Certbot va host nginx tekshiruvi..."
 if systemctl is-active --quiet nginx 2>/dev/null; then
   echo "    !! Host nginx ishlayapti — to'xtatilmoqda (Caddy bilan ziddiyat)"
   sudo systemctl stop nginx
@@ -32,7 +32,7 @@ sudo ss -tlnp | grep -E ':80|:443' || true
 echo ""
 
 # --- 2. DNS ---
-echo "==> [2/7] DNS tekshiruvi ($LANDING_DOMAIN)..."
+echo "==> [2/8] DNS tekshiruvi ($LANDING_DOMAIN)..."
 if command -v dig >/dev/null 2>&1; then
   dig +short "$LANDING_DOMAIN" || true
 else
@@ -41,7 +41,7 @@ fi
 echo ""
 
 # --- 3. Caddyfile da landing bloki bormi? ---
-echo "==> [3/7] Caddyfile tekshiruvi..."
+echo "==> [3/8] Caddyfile tekshiruvi..."
 CADDYFILE="$FINANCE_DIR/Caddyfile"
 if [ -f "$CADDYFILE" ]; then
   if grep -q "wtma-landing-web" "$CADDYFILE"; then
@@ -71,7 +71,7 @@ fi
 
 # --- 4. .env.prod ---
 echo ""
-echo "==> [4/7] .env.prod tekshiruvi..."
+echo "==> [4/8] .env.prod tekshiruvi..."
 ENV_FILE="$FINANCE_DIR/.env.prod"
 if [ -f "$ENV_FILE" ]; then
   grep -E '^(DOMAIN|LANDING_DOMAIN|ACME_EMAIL)=' "$ENV_FILE" || true
@@ -85,7 +85,7 @@ fi
 
 # --- 5. Docker tarmoq ---
 echo ""
-echo "==> [5/7] Docker tarmoq ($DOCKER_NETWORK)..."
+echo "==> [5/8] Docker tarmoq ($DOCKER_NETWORK)..."
 docker network create "$DOCKER_NETWORK" 2>/dev/null || true
 
 if [ -n "$CADDY_CONTAINER" ]; then
@@ -99,7 +99,6 @@ else
   echo "    !! Caddy konteyner topilmadi!"
 fi
 
-# Landing konteyner tarmoqda bormi?
 if docker ps --format '{{.Names}}' | grep -q wtma-landing-web; then
   if ! docker inspect wtma-landing-web --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' | grep -q "$DOCKER_NETWORK"; then
     echo "    Landing tarmoqqa qayta ulanmoqda..."
@@ -108,42 +107,71 @@ if docker ps --format '{{.Names}}' | grep -q wtma-landing-web; then
   fi
 fi
 
-# --- 6. Caddy qayta ishga tushirish (sertifikat olish uchun) ---
+# --- 6. Finance repo yangilash (DNS fix docker-compose uchun) ---
 echo ""
-echo "==> [6/7] Caddy qayta ishga tushirilmoqda (Let's Encrypt sertifikat olish)..."
+echo "==> [6/8] Finance repo yangilanmoqda..."
+if [ -d "$FINANCE_DIR/.git" ]; then
+  cd "$FINANCE_DIR"
+  git pull --ff-only || echo "    !! git pull xato — qo'lda yangilang"
+else
+  echo "    !! Finance git repo topilmadi"
+fi
+
+# --- 7. Caddy qayta yaratish (Let's Encrypt sertifikat olish) ---
+echo ""
+echo "==> [7/8] Caddy qayta yaratilmoqda (DNS 8.8.8.8 + sertifikat olish)..."
 cd "$FINANCE_DIR"
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d caddy
-echo "    15 soniya kutilmoqda (ACME challenge)..."
-sleep 15
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --force-recreate caddy
+
+CADDY_CONTAINER="$(docker ps --format '{{.Names}}' | grep -E 'caddy' | head -1 || true)"
+echo "    Caddy konteyner: $CADDY_CONTAINER"
+
+echo "    Caddy ichidagi DNS test:"
+docker exec "$CADDY_CONTAINER" nslookup acme-v02.api.letsencrypt.org 2>&1 | tail -3 || \
+  echo "    !! DNS hali ishlamayapti"
+
+echo "    Konteynerdagi Caddyfile:"
+docker exec "$CADDY_CONTAINER" grep -E 'landing|wtma-landing' /etc/caddy/Caddyfile || \
+  echo "    !! Landing bloki konteynerda ko'rinmayapti!"
+
+echo "    30 soniya kutilmoqda (ACME challenge)..."
+sleep 30
 
 echo ""
-echo "    Caddy oxirgi loglar:"
-docker logs "$CADDY_CONTAINER" --tail 25 2>&1 || docker logs finance-caddy-1 --tail 25 2>&1 || true
+echo "    Caddy oxirgi loglar (landing/acme):"
+docker logs "$CADDY_CONTAINER" --tail 40 2>&1 | grep -iE 'landing|acme|certificate|error|obtain' || \
+  docker logs "$CADDY_CONTAINER" --tail 15 2>&1 || true
 
-# --- 7. Test ---
+# --- 8. Test ---
 echo ""
-echo "==> [7/7] Test..."
+echo "==> [8/8] Test..."
 echo "    HTTP:"
 curl -sI -H "Host: $LANDING_DOMAIN" http://127.0.0.1 | head -5 || true
 echo ""
 echo "    HTTPS:"
-curl -sI --max-time 10 "https://$LANDING_DOMAIN" | head -8 || echo "    !! HTTPS hali ishlamayapti — loglarni ko'ring"
+if curl -sI --max-time 15 "https://$LANDING_DOMAIN" | head -8; then
+  echo "    OK — HTTPS ishlayapti!"
+else
+  echo "    !! HTTPS hali ishlamayapti"
+  echo ""
+  echo "    Qo'lda sertifikat olish uchun:"
+  echo "      curl -vI http://$LANDING_DOMAIN"
+  echo "      docker logs $CADDY_CONTAINER 2>&1 | grep -i landing"
+fi
 echo ""
 
-# Caddy wtma-landing-web ni ko'ra oladimi?
 if [ -n "$CADDY_CONTAINER" ]; then
   echo "    Caddy -> landing bog'lanish:"
   docker exec "$CADDY_CONTAINER" wget -qO- --timeout=3 http://wtma-landing-web:80 2>&1 | head -c 80 || \
-    echo "    !! Caddy landing konteynerini ko'rmayapti — tarmoq muammosi (502 bo'lishi mumkin)"
+    echo "    !! Caddy landing konteynerini ko'rmayapti"
   echo ""
 fi
 
 echo "=========================================="
-echo " Agar HTTPS hali ishlamasa:"
-echo "   docker logs $CADDY_CONTAINER 2>&1 | grep -iE 'error|acme|certificate|landing'"
+echo " Loglarda faqat wtma.okaposai.uz ko'rinsa —"
+echo " landing uchun sertifikat olinmagan."
 echo ""
-echo " Ko'p uchraydigan sabablar:"
-echo "   1. DNS hali tarqalmagan — dig $LANDING_DOMAIN"
-echo "   2. Port 80 tashqaridan yopiq — firewall"
-echo "   3. Eski nginx/certbot hali 443 ni band qilmoqda"
+echo " Tekshirish:"
+echo "   docker logs $CADDY_CONTAINER 2>&1 | grep -i landing"
+echo "   docker exec $CADDY_CONTAINER cat /etc/caddy/Caddyfile"
 echo "=========================================="

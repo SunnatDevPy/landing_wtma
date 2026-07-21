@@ -24,8 +24,8 @@ export function AnimatedNumber({
       return;
     }
     const controls = animate(motionValue, value, {
-      duration: 1.2,
-      ease: [0.16, 1, 0.3, 1],
+      duration: 1.8,
+      ease: [0.22, 1, 0.36, 1],
       onUpdate: (v) => {
         if (ref.current) ref.current.textContent = format(v) + suffix;
       },

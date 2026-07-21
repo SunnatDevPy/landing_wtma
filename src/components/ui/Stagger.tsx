@@ -1,20 +1,17 @@
 import { motion, type HTMLMotionProps } from "framer-motion";
-import { useMotionPreset } from "@/hooks/useMotionPreset";
-
-const EASE = [0.16, 1, 0.3, 1] as const;
+import { EASE, MOTION, useMotionPreset } from "@/hooks/useMotionPreset";
 
 const containerVariants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
+  visible: { transition: { staggerChildren: MOTION.stagger } },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 16, filter: "blur(8px)" },
+  hidden: { opacity: 0, y: 24 },
   visible: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.6, ease: EASE },
+    transition: { duration: MOTION.duration.normal, ease: EASE },
   },
 };
 
@@ -24,7 +21,7 @@ export function StaggerContainer({ className, children, ...props }: HTMLMotionPr
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={MOTION.viewport}
       variants={containerVariants}
       {...props}
     >
@@ -50,15 +47,16 @@ export function Reveal({
   children: React.ReactNode;
   delay?: number;
 }) {
-  const { distance, blur, reduce } = useMotionPreset();
+  const { distance, reduce } = useMotionPreset();
 
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: distance, filter: reduce ? "none" : `blur(${blur}px)` }}
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.8, delay, ease: EASE }}
+      initial={{ opacity: 0, y: distance }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={MOTION.viewport}
+      transition={{ duration: MOTION.duration.slow, delay, ease: EASE }}
+      style={{ willChange: reduce ? undefined : "opacity, transform" }}
     >
       {children}
     </motion.div>

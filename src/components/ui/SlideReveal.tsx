@@ -1,7 +1,5 @@
 import { motion } from "framer-motion";
-import { useMotionPreset } from "@/hooks/useMotionPreset";
-
-const EASE = [0.16, 1, 0.3, 1] as const;
+import { EASE, MOTION, useMotionPreset } from "@/hooks/useMotionPreset";
 
 interface SlideRevealProps {
   children: React.ReactNode;
@@ -13,15 +11,15 @@ interface SlideRevealProps {
 /** Text/card slides in from left or right — our brand signature motion. */
 export function SlideReveal({ children, from, className, delay = 0 }: SlideRevealProps) {
   const { reduce } = useMotionPreset();
-  const x = from === "left" ? -48 : 48;
+  const x = from === "left" ? -36 : 36;
 
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, x: reduce ? 0 : x, filter: reduce ? "none" : "blur(6px)" }}
-      whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.75, delay, ease: EASE }}
+      initial={{ opacity: 0, x: reduce ? 0 : x }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={MOTION.viewport}
+      transition={{ duration: MOTION.duration.normal, delay, ease: EASE }}
     >
       {children}
     </motion.div>
@@ -36,7 +34,7 @@ interface AlternatingRowProps {
 
 export function AlternatingSlide({ index, children, className }: AlternatingRowProps) {
   return (
-    <SlideReveal from={index % 2 === 0 ? "left" : "right"} className={className} delay={index * 0.06}>
+    <SlideReveal from={index % 2 === 0 ? "left" : "right"} className={className} delay={index * 0.1}>
       {children}
     </SlideReveal>
   );

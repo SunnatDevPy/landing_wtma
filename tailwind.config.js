@@ -36,15 +36,15 @@ export default {
           "50%": { opacity: "0.8", transform: "translate(2%, -1%) scale(1.05)" },
         },
         float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-8px)" },
+          "0%, 100%": { transform: "translate3d(0, 0, 0)" },
+          "50%": { transform: "translate3d(0, -8px, 0)" },
         },
       },
       animation: {
         "fade-in": "fade-in 0.5s ease-out",
         "slide-up": "slide-up 0.6s ease-out",
         "mesh-shift": "mesh-shift 8s ease-in-out infinite",
-        float: "float 5s ease-in-out infinite",
+        float: "float 7s ease-in-out infinite",
       },
       backgroundImage: {
         "gradient-brand": "linear-gradient(135deg, #1a2d52 0%, #2f4575 50%, #3b548d 100%)",

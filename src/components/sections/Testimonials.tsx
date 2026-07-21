@@ -13,15 +13,16 @@ export function Testimonials() {
   const { t } = useI18n();
 
   return (
-    <section className="py-24 sm:py-32">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="relative overflow-hidden py-24 sm:py-32">
+      <div className="pointer-events-none absolute -right-32 bottom-0 size-80 rounded-full bg-brand-600/5 blur-3xl" aria-hidden />
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader eyebrow={t.testimonials.eyebrow} title={t.testimonials.title} />
 
         <div className="space-y-4">
           {t.testimonials.items.map((item, i) => (
             <CornerReveal key={item.author} corner={CORNERS[i]} delay={i * 0.1}>
-              <motion.div whileHover={{ y: -4, transition: { duration: 0.3, ease: EASE } }}>
-                <BezelCard glow={i === 1} innerClassName="p-6 sm:p-8">
+              <motion.div whileHover={{ y: -6, transition: { duration: 0.35, ease: EASE } }}>
+                <BezelCard glow={i === 1} innerClassName="p-6 sm:p-8 transition-shadow duration-300 hover:shadow-xl">
                   <div
                     className={cn(
                       "flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8",

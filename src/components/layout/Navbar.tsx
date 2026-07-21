@@ -5,7 +5,7 @@ import { useI18n } from "@/i18n/I18nContext";
 import { CONTACT } from "@/config/contact";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { EASE } from "@/hooks/useMotionPreset";
+import { EASE, MOTION } from "@/hooks/useMotionPreset";
 
 function HamburgerIcon({ open }: { open: boolean }) {
   return (
@@ -62,12 +62,12 @@ export function Navbar() {
         <motion.nav
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: EASE }}
+          transition={{ duration: MOTION.duration.slow, ease: EASE }}
           className={cn(
             "flex w-full max-w-5xl items-center justify-between rounded-full border px-4 py-2.5 transition-all duration-700 sm:px-6",
             scrolled
-              ? "border-brand-800/10 bg-white/85 shadow-[0_8px_32px_-8px_rgba(15,26,48,0.12)] backdrop-blur-xl"
-              : "border-white/30 bg-white/70 shadow-sm backdrop-blur-md",
+              ? "border-brand-500/15 bg-white/90 shadow-[0_8px_40px_-8px_rgba(230,46,82,0.15)] backdrop-blur-xl"
+              : "border-white/40 bg-white/75 shadow-[0_4px_24px_-4px_rgba(15,26,48,0.08)] backdrop-blur-md",
           )}
         >
           <a href="#" className="flex items-center gap-2">
@@ -79,7 +79,7 @@ export function Navbar() {
               <a
                 key={link.id}
                 href={`#${link.id}`}
-                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-brand-800/65 transition-all duration-300 hover:bg-brand-600/5 hover:text-brand-900"
+                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-brand-800/65 transition-all duration-300 hover:bg-brand-500/8 hover:text-brand-900"
               >
                 {link.label}
               </a>
@@ -144,7 +144,7 @@ export function Navbar() {
                   initial={{ opacity: 0, y: 48 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 24 }}
-                  transition={{ duration: 0.4, delay: 0.08 * i, ease: EASE }}
+                  transition={{ duration: MOTION.duration.normal, delay: 0.12 * i, ease: EASE }}
                   onClick={() => setMenuOpen(false)}
                   className="py-4 text-3xl font-semibold tracking-tight text-white transition-colors hover:text-brand-500"
                 >

@@ -17,7 +17,12 @@ export function SectionHeader({ eyebrow, title, subtitle, align = "center", dark
         dark && "text-white",
       )}
     >
-      <span className={cn("section-eyebrow", dark && "border-white/20 bg-white/10 text-white/80")}>
+      <span
+        className={cn(
+          "section-eyebrow shimmer-badge",
+          dark && "border-white/20 bg-white/10 text-white/80",
+        )}
+      >
         {eyebrow}
       </span>
       <h2
@@ -28,6 +33,7 @@ export function SectionHeader({ eyebrow, title, subtitle, align = "center", dark
       >
         {title}
       </h2>
+      {align === "center" && <div className="section-title-line" />}
       {subtitle && (
         <p
           className={cn(

@@ -41,11 +41,12 @@ export function KeywordTicker({ items, className }: { items: ReadonlyArray<Ticke
       <Marquee speed="slow">
         {items.map((item, i) => (
           <span key={`${item.label}-${i}`} className="flex items-center gap-8 whitespace-nowrap">
-            <span className="text-sm font-semibold uppercase tracking-[0.15em] text-white/80 sm:text-base">
-              {String(i + 1).padStart(2, "0")}. {item.label}
+            <span className="text-sm font-semibold uppercase tracking-[0.15em] sm:text-base">
+              <span className="text-brand-500">{String(i + 1).padStart(2, "0")}.</span>{" "}
+              <span className="text-white/85">{item.label}</span>
             </span>
-            <span className="text-brand-500/60" aria-hidden>
-              /
+            <span className="text-brand-500/50" aria-hidden>
+              ✦
             </span>
           </span>
         ))}
@@ -61,9 +62,11 @@ export function LogoTicker({ labels, className }: { labels: readonly string[]; c
         {labels.map((label, i) => (
           <div
             key={`${label}-${i}`}
-            className="flex h-12 min-w-[140px] items-center justify-center rounded-xl border border-brand-800/10 bg-white px-6 shadow-sm"
+            className="flex h-12 min-w-[140px] items-center justify-center rounded-xl border border-brand-800/10 bg-white px-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-500/25 hover:shadow-md"
           >
-            <span className="text-sm font-bold tracking-tight text-brand-800/50">{label}</span>
+            <span className="text-sm font-bold tracking-tight text-brand-800/55 transition-colors hover:text-brand-600">
+              {label}
+            </span>
           </div>
         ))}
       </Marquee>
